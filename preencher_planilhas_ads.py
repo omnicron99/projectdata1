@@ -12,17 +12,7 @@ SCOPES = [
 creds = Credentials.from_service_account_file("credentials.json", scopes=SCOPES)
 client = gspread.authorize(creds)
 
-token = "EAAYHCb4Hp6sBOx744Q1J3PPzu9Qgwo40hZBZBp5GkS6LJa6DKIS4N8A7XRAsRH46m72tybE9qVneh7Q8bqpd93JCZCUmc05cbupicXCScV1rvpNsCCea7y8Y2Q1kCPlxZCO5ZCixJgWIXfWIudYaBXpJQjrRC6EkMnDd9yVg1UNM1qybX53BQJRwKHM7yMjmX9AZDZD"
-fields = [
-    "campaign_name",
-    "reach",
-    "impressions",
-    "clicks",
-    "spend",
-    "onsite_conversion.messaging_conversation_started_7d",
-    "cpm",
-    "cpc"
-]
+token = "EAAEVyhRY7qsBOZBrZBM6aSx2qtce2gfpmZCLkxVoO8rnOZBLvSxNKjbfLuDYQpoiZBd9YFMWX1HzmsIE283hDKfnAoUX1CRNt74bEATIi6vZA0mBzavlKhl98VygiSZA0px3OWcfo3k9rBOljWsJjdY6VZBXZCG7U1Rbzfot2y0WUZCz0bn9R5W08wNfZCdDxgZBfahHZAwZDZD"
 
 # Data de ontem
 ontem = datetime.now() - timedelta(days=1)
@@ -33,17 +23,22 @@ data_api = ontem.strftime("%Y-%m-%d")
 with open("planilhas_criadas.csv", newline="", encoding="utf-8") as f:
     reader = csv.DictReader(f)
     for row in reader:
+        nome_conta = row["Cliente"].strip()
         ad_account_id = row["ID_ADS_ACCOUNT"].strip()
+        if not ad_account_id.startswith("act_"):
+            ad_account_id = f"act_{ad_account_id}"
+
         sheet_url = row["Planilha URL"].strip()
 
         try:
             planilha = client.open_by_url(sheet_url)
             aba = planilha.sheet1
 
-            # Pega dados de campanha
+            # Pega dados de campanha (nível de campanha)
             url = (
-                f"https://graph.facebook.com/v19.0/act_{ad_account_id}/insights"
-                f"?fields={','.join(fields)}"
+                f"https://graph.facebook.com/v19.0/{ad_account_id}/insights"
+                f"?fields=campaign_name,reach,impressions,clicks,spend,actions,cpm,cpc"
+                f"&level=campaign"
                 f"&time_range={{\"since\":\"{data_api}\",\"until\":\"{data_api}\"}}"
                 f"&access_token={token}"
             )
@@ -53,8 +48,8 @@ with open("planilhas_criadas.csv", newline="", encoding="utf-8") as f:
 
             campanhas = data.get("data", [])
             if not campanhas:
-                aba.append_row([data_formatada, "Sem dados", 0, 0, 0, 0, 0, 0, 0])
-                print(f"⚠️ Sem dados para conta {ad_account_id}, linha vazia registrada.")
+                aba.append_row([data_formatada, "Sem dados", 0, 0, 0, 0, 0, 0, 0, 0])
+                print(f"⚠️ Sem dados para conta {nome_conta}, linha vazia registrada.")
                 continue
 
             for campanha in campanhas:
@@ -63,9 +58,16 @@ with open("planilhas_criadas.csv", newline="", encoding="utf-8") as f:
                 impressoes = int(campanha.get("impressions", 0))
                 cliques = int(campanha.get("clicks", 0))
                 gasto = float(campanha.get("spend", 0))
-                conversas = int(campanha.get("onsite_conversion.messaging_conversation_started_7d", 0))
                 cpm = float(campanha.get("cpm", 0))
                 cpc = float(campanha.get("cpc", 0))
+
+                # Buscar conversas iniciadas
+                conversas = 0
+                for action in campanha.get("actions", []):
+                    if action.get("action_type") == "onsite_conversion.messaging_conversation_started_7d":
+                        conversas = int(float(action.get("value", 0)))
+                        break
+
                 cpl = round(gasto / conversas, 2) if conversas > 0 else 0
 
                 aba.append_row([
@@ -81,7 +83,7 @@ with open("planilhas_criadas.csv", newline="", encoding="utf-8") as f:
                     cpl
                 ])
 
-            print(f"✅ Dados preenchidos para conta {ad_account_id}")
+            print(f"✅ Dados preenchidos para conta {nome_conta}")
 
         except Exception as e:
-            print(f"Erro com {ad_account_id}: {e}")
+            print(f"Erro com {nome_conta}: {e}")

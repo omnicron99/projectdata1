@@ -3,7 +3,6 @@ from google.oauth2.service_account import Credentials
 import csv
 import os
 
-# Autenticação
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive"
@@ -11,25 +10,21 @@ SCOPES = [
 creds = Credentials.from_service_account_file("credentials.json", scopes=SCOPES)
 client = gspread.authorize(creds)
 
-# Abrir planilha mestre
 spreadsheet_master = client.open_by_url("https://docs.google.com/spreadsheets/d/1Db1tQChukELH81zqVBVjm3DDydKBttHVwRVRC-SntvI")
 sheet = spreadsheet_master.worksheet("Planilha1")
 
-# Ler colunas
-clientes = sheet.col_values(1)[1:]         # Coluna A (Cliente), pula o cabeçalho
-ids = sheet.col_values(5)[1:]              # Coluna E (ID_ADS_ACCOUNT), pula o cabeçalho
+clientes = sheet.col_values(1)[1:]
+ids = sheet.col_values(5)[1:]
 
-# Verificar se CSV já existe
 arquivo_csv = "planilhas_criadas.csv"
 planilhas_existentes = set()
 
 if os.path.exists(arquivo_csv):
     with open(arquivo_csv, newline="", encoding="utf-8") as f:
-        next(f)  # pula cabeçalho
+        next(f)
         for row in csv.reader(f):
-            planilhas_existentes.add(row[0].strip())  # Nome do cliente já salvo
+            planilhas_existentes.add(row[0].strip())
 
-# Abre CSV para adicionar novas planilhas
 with open(arquivo_csv, mode="a", newline="", encoding="utf-8") as file:
     writer = csv.writer(file)
     if os.stat(arquivo_csv).st_size == 0:
@@ -51,6 +46,14 @@ with open(arquivo_csv, mode="a", newline="", encoding="utf-8") as file:
 
         # Compartilhar com domínio
         nova_planilha.share("conversaojuridica.com.br", perm_type="domain", role="writer")
+
+        # Adiciona cabeçalho
+        aba = nova_planilha.sheet1
+        cabecalho = [
+            "Data", "Nome da Campanha", "Alcance", "Impressoes", "Cliques", "Gasto (R$)", "Conversas",
+            "CPM (R$)", "CPC (R$)", "CPL (R$)"
+        ]
+        aba.append_row(cabecalho)
 
         # Registrar no CSV
         writer.writerow([cliente_nome, ads_id, nova_planilha.url])
