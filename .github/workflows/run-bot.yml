@@ -1,29 +1,39 @@
 name: Preencher Planilhas Ads
 
 on:
-  schedule:
-    - cron: '0 11 * * *'  # Executa às 08:00 BRT (11:00 UTC)
   workflow_dispatch:
+  schedule:
+    - cron: '0 11 * * *' # 08:00 BRT
 
 jobs:
-  run-script:
+  run-bot:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Clonar repositório
-        uses: actions/checkout@v3
+    - name: Checar código
+      uses: actions/checkout@v3
 
-      - name: Configurar Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
+    - name: Configurar Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
 
-      - name: Instalar dependências
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
+    - name: Instalar dependências
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
 
-      - name: Adicionar credenciais
-        run: echo "${{ secrets.GS_CREDENTIALS }}" > credentials.json
+    - name: Adicionar credenciais
+      run: echo "${{ secrets.GS_CREDENTIALS }}" > credentials.json
 
-      - name: Executar script
-        run: python preencher_planilhas_ads.py
+    - name: Verificar conteúdo do arquivo credentials.json
+      run: |
+        echo ">> Começo do arquivo:"
+        head -n 5 credentials.json
+
+    - name: Validar JSON
+      run: |
+        python -m json.tool credentials.json > /dev/null && echo "✅ JSON válido" || echo "❌ JSON inválido"
+
+    - name: Rodar script
+      run: python preencher_planilhas_ads.py
