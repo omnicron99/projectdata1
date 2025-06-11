@@ -12,7 +12,8 @@ SCOPES = [
 creds = Credentials.from_service_account_file("credentials.json", scopes=SCOPES)
 client = gspread.authorize(creds)
 
-token = "EAAEVyhRY7qsBOZBrZBM6aSx2qtce2gfpmZCLkxVoO8rnOZBLvSxNKjbfLuDYQpoiZBd9YFMWX1HzmsIE283hDKfnAoUX1CRNt74bEATIi6vZA0mBzavlKhl98VygiSZA0px3OWcfo3k9rBOljWsJjdY6VZBXZCG7U1Rbzfot2y0WUZCz0bn9R5W08wNfZCdDxgZBfahHZAwZDZD"
+with open("meta_token.txt", "r") as token_file:
+    token = token_file.read().strip()
 
 # Data de ontem
 ontem = datetime.now() - timedelta(days=1)
