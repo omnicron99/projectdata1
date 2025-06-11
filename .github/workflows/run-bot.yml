@@ -31,9 +31,14 @@ jobs:
         echo ">> Começo do arquivo:"
         head -n 5 credentials.json
 
-    - name: Validar JSON
+    - name: Testar se secret está preenchido
       run: |
-        python -m json.tool credentials.json > /dev/null && echo "✅ JSON válido" || echo "❌ JSON inválido"
+        if [ -z "${{ secrets.GS_CREDENTIALS }}" ]; then
+          echo "❌ O secret GS_CREDENTIALS está vazio ou inválido"
+        else
+          echo "✅ O secret GS_CREDENTIALS foi lido corretamente"
+        fi
+
 
     - name: Rodar script
       run: python preencher_planilhas_ads.py
