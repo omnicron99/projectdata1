@@ -22,6 +22,12 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-
+          
+      - name: 🔐 Criar arquivo de credenciais a partir do Secret
+        run: |
+          echo "$GS_CREDENTIALS_BASE64" | base64 --decode > credentials.json
+        env:
+          GS_CREDENTIALS_BASE64: ${{ secrets.GS_CREDENTIALS_BASE64 }}
+          
       - name: Rodar script
         run: python preencher_planilhas_ads.py
