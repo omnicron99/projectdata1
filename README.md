@@ -61,3 +61,10 @@ Crie dois arquivos locais antes de executar:
 - `meta_token.txt`: token de acesso à API Meta
 
 Esses arquivos não estão no repositório por segurança.
+
+### Como converter arquivos para base64 no powershell
+
+Abra o terminal no pc e digite:
+
+[Convert]::ToBase64String([IO.File]::ReadAllBytes("credentials.json")) > base64.txt
+
