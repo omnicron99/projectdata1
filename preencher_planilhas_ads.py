@@ -3,6 +3,15 @@ import requests
 import csv
 from datetime import datetime, timedelta
 from google.oauth2.service_account import Credentials
+import logging
+import traceback
+
+# Configurar logs
+logging.basicConfig(
+    filename="logs_execucao.txt",
+    level=logging.INFO,
+    format="%(asctime)s — %(levelname)s — %(message)s"
+)
 
 # Configs
 SCOPES = [
@@ -50,7 +59,9 @@ with open("planilhas_criadas.csv", newline="", encoding="utf-8") as f:
             campanhas = data.get("data", [])
             if not campanhas:
                 aba.append_row([data_formatada, "Sem dados", 0, 0, 0, 0, 0, 0, 0, 0])
-                print(f"⚠️ Sem dados para conta {nome_conta}, linha vazia registrada.")
+                msg = f"⚠️ Sem dados para conta {nome_conta}, linha vazia registrada."
+                print(msg)
+                logging.warning(msg)
                 continue
 
             for campanha in campanhas:
@@ -84,7 +95,12 @@ with open("planilhas_criadas.csv", newline="", encoding="utf-8") as f:
                     cpl
                 ])
 
-            print(f"✅ Dados preenchidos para conta {nome_conta}")
+            msg = f"✅ Dados preenchidos para conta {nome_conta}"
+            print(msg)
+            logging.info(msg)
 
         except Exception as e:
-            print(f"Erro com {nome_conta}: {e}")
+            msg = f"❌ Erro com conta {nome_conta}: {e}"
+            print(msg)
+            logging.error(msg)
+            traceback.print_exc()
